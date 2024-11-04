@@ -1,20 +1,19 @@
-import pandas as pd
 import os
 import zipfile
+import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import LabelEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
-from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import classification_report, accuracy_score
-from xgboost import XGBClassifier
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
+from xgboost import XGBClassifier
+
 
 def unzip_folder(zip_path: str, extract_to: str):
     os.makedirs(extract_to, exist_ok=True)
@@ -98,24 +97,33 @@ def train_random_forest(X_train, y_train, X_test, y_test):
     """
     # Initialize the model
     model = RandomForestClassifier(random_state=42)
-
     # Train the model
     model.fit(X_train, y_train)
-
     # Make predictions
     y_pred = model.predict(X_test)
-
     # Evaluate the model
     accuracy = accuracy_score(y_test, y_pred)
     report = classification_report(y_test, y_pred)
-
     print("Random Forest Model Accuracy:", accuracy)
     print("Classification Report:\n", report)
-
     return model, accuracy, report
 
 
 def train_xgboost(X_train, y_train, X_test, y_test):
+    """
+    Train and evaluate a Random Forest model.
+
+    Parameters:
+    - X_train: Training feature set
+    - y_train: Training labels
+    - X_test: Testing feature set
+    - y_test: Testing labels
+
+    Returns:
+    - model: Trained Random Forest model
+    - accuracy: Accuracy on the test set
+    - report: Classification report on the test set
+    """
     # Encode target labels
     label_encoder = LabelEncoder()
     y_train_encoded = label_encoder.fit_transform(y_train)
@@ -126,58 +134,85 @@ def train_xgboost(X_train, y_train, X_test, y_test):
         random_state=42, use_label_encoder=False, eval_metric="mlogloss"
     )
     model.fit(X_train, y_train_encoded)
-
-    # Predict and decode labels back to original form
     y_pred_encoded = model.predict(X_test)
     y_pred = label_encoder.inverse_transform(y_pred_encoded)
-
-    # Evaluate the model
     accuracy = accuracy_score(y_test, y_pred)
     report = classification_report(y_test, y_pred)
-
     print("XGBoost Model Accuracy:", accuracy)
     print("Classification Report:\n", report)
-
     return model, accuracy, report
 
 
 def train_svc(X_train, y_train, X_test, y_test):
+    """
+    Train and evaluate a Random Forest model.
+
+    Parameters:
+    - X_train: Training feature set
+    - y_train: Training labels
+    - X_test: Testing feature set
+    - y_test: Testing labels
+
+    Returns:
+    - model: Trained Random Forest model
+    - accuracy: Accuracy on the test set
+    - report: Classification report on the test set
+    """
     model = SVC(random_state=42)
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
-
     accuracy = accuracy_score(y_test, y_pred)
     report = classification_report(y_test, y_pred)
-
     print("SVC Model Accuracy:", accuracy)
     print("Classification Report:\n", report)
-
     return model, accuracy, report
 
 def train_knn(X_train, y_train, X_test, y_test, n_neighbors=5):
+    """
+    Train and evaluate a Random Forest model.
+
+    Parameters:
+    - X_train: Training feature set
+    - y_train: Training labels
+    - X_test: Testing feature set
+    - y_test: Testing labels
+
+    Returns:
+    - model: Trained Random Forest model
+    - accuracy: Accuracy on the test set
+    - report: Classification report on the test set
+    """
     model = KNeighborsClassifier(n_neighbors=n_neighbors)
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
-    
     accuracy = accuracy_score(y_test, y_pred)
     report = classification_report(y_test, y_pred)
-    
     print("KNN Model Accuracy:", accuracy)
     print("Classification Report:\n", report)
-    
     return model, accuracy, report
 
 def train_mlp(X_train, y_train, X_test, y_test):
     model = MLPClassifier(hidden_layer_sizes=(100,), max_iter=300, random_state=42)
+    """
+    Train and evaluate a Random Forest model.
+
+    Parameters:
+    - X_train: Training feature set
+    - y_train: Training labels
+    - X_test: Testing feature set
+    - y_test: Testing labels
+
+    Returns:
+    - model: Trained Random Forest model
+    - accuracy: Accuracy on the test set
+    - report: Classification report on the test set
+    """
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
-    
     accuracy = accuracy_score(y_test, y_pred)
     report = classification_report(y_test, y_pred)
-    
     print("MLP Model Accuracy:", accuracy)
     print("Classification Report:\n", report)
-    
     return model, accuracy, report
 
 
@@ -186,17 +221,13 @@ def main():
     unzip_folder("datasets.zip", ".")
     reviews = read_csv("datasets/rotten_tomatoes_critic_reviews_50k.csv")
     movies = read_csv("datasets/rotten_tomatoes_movies.csv")
-
-    # Merge datasets
     merged_df = pd.merge(movies, reviews, on="rotten_tomatoes_link", how="left")
     merged_df = preprocess_data(merged_df)
-
     # Define target and features
     X = merged_df[
         ["runtime", "content_rating_encoded", "tomatometer_fresh_critics_count"]
     ]  # Add more features as needed
     y = merged_df["tomatometer_status"]
-
     # Train-test split
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42
@@ -205,7 +236,6 @@ def main():
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42
     )
-
     # Train and evaluate Random Forest
     model, accuracy, report = train_random_forest(X_train, y_train, X_test, y_test)
     model, accuracy, report = train_xgboost(X_train, y_train, X_test, y_test)
