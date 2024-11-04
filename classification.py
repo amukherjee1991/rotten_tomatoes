@@ -10,7 +10,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.ensemble import GradientBoostingClassifier
-
+from sklearn.metrics import classification_report, accuracy_score
 
 def unzip_folder(zip_path: str, extract_to: str):
     os.makedirs(extract_to, exist_ok=True)
@@ -26,49 +26,71 @@ def read_csv(file_path: str):
 
 def preprocess_data(df):
     # Convert dates to datetime and fill missing values with a placeholder date
-    df["original_release_date"] = pd.to_datetime(
-        df["original_release_date"], errors="coerce"
-    )
-    df["streaming_release_date"] = pd.to_datetime(
-        df["streaming_release_date"], errors="coerce"
-    )
-    placeholder_date = pd.to_datetime("1900-01-01")
-    df["original_release_date"].fillna(placeholder_date, inplace=True)
-    df["streaming_release_date"].fillna(placeholder_date, inplace=True)
-
-    categorical_columns = [
-        "content_rating",
-        "genres",
-        "directors",
-        "authors",
-        "actors",
-        "production_company",
-    ]
+    df['original_release_date'] = pd.to_datetime(df['original_release_date'], errors='coerce')
+    df['streaming_release_date'] = pd.to_datetime(df['streaming_release_date'], errors='coerce')
+    placeholder_date = pd.to_datetime('1900-01-01')
+    df['original_release_date'] = df['original_release_date'].fillna(placeholder_date)
+    df['streaming_release_date'] = df['streaming_release_date'].fillna(placeholder_date)
+    
+    # Fill missing categorical values with 'Unknown'
+    categorical_columns = ['content_rating', 'genres', 'directors', 'authors', 'actors', 'production_company']
     for column in categorical_columns:
-        df[column].fillna("Unknown", inplace=True)
-
+        df[column] = df[column].fillna('Unknown')
+    
+    # Encode content rating as numeric
     label_encoder = LabelEncoder()
-    df["content_rating_encoded"] = label_encoder.fit_transform(df["content_rating"])
-    numeric_columns = [
-        "runtime",
-        "tomatometer_rating",
-        "tomatometer_count",
-        "audience_rating",
-        "audience_count",
-        "tomatometer_top_critics_count",
-        "tomatometer_fresh_critics_count",
-        "tomatometer_rotten_critics_count",
-    ]
+    df['content_rating_encoded'] = label_encoder.fit_transform(df['content_rating'])
+    
+    # Fill missing numeric values with median
+    numeric_columns = ['runtime', 'tomatometer_rating', 'tomatometer_count', 
+                       'audience_rating', 'audience_count', 'tomatometer_top_critics_count', 
+                       'tomatometer_fresh_critics_count', 'tomatometer_rotten_critics_count']
     for column in numeric_columns:
-        df[column].fillna(df[column].median(), inplace=True)
-    text_columns = ["movie_info", "critics_consensus"]
+        df[column] = df[column].fillna(df[column].median())
+    
+    # Fill missing text columns with an empty string
+    text_columns = ['movie_info', 'critics_consensus']
     for column in text_columns:
-        df[column].fillna("", inplace=True)
-
-    df = df.dropna(subset=["tomatometer_status"])
+        df[column] = df[column].fillna('')
+    
+    # Drop any remaining rows with NaN in the target column (if necessary)
+    df = df.dropna(subset=['tomatometer_status'])
+    
     return df
 
 
+def train_random_forest(X_train, y_train, X_test, y_test):
+    """
+    Train and evaluate a Random Forest model.
+    
+    Parameters:
+    - X_train: Training feature set
+    - y_train: Training labels
+    - X_test: Testing feature set
+    - y_test: Testing labels
+    
+    Returns:
+    - model: Trained Random Forest model
+    - accuracy: Accuracy on the test set
+    - report: Classification report on the test set
+    """
+    # Initialize the model
+    model = RandomForestClassifier(random_state=42)
+    
+    # Train the model
+    model.fit(X_train, y_train)
+    
+    # Make predictions
+    y_pred = model.predict(X_test)
+    
+    # Evaluate the model
+    accuracy = accuracy_score(y_test, y_pred)
+    report = classification_report(y_test, y_pred)
+    
+    print("Random Forest Model Accuracy:", accuracy)
+    print("Classification Report:\n", report)
+    
+    return model, accuracy, report
 def main():
     # Unzip and load data
     unzip_folder("datasets.zip", ".")
@@ -84,29 +106,17 @@ def main():
         ["runtime", "content_rating_encoded", "tomatometer_fresh_critics_count"]
     ]  # Add more features as needed
     y = merged_df["tomatometer_status"]
-    print(X)
-    print(y)
+    \
 
     # Train-test split
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42
     )
-
-    # Check for NaN values in X_train and y_train
-    print("Checking for NaN values in X_train:")
-    print(X_train.isna().sum())
-    print("Checking for NaN values in y_train:")
-    print(y_train.isna().sum())
-
-    # # Initialize model
-    model = RandomForestClassifier()
-
-    # Train model
-    model.fit(X_train, y_train)
-
-    # Evaluate model
-    y_pred = model.predict(X_test)
-    print(classification_report(y_test, y_pred))
+# Train-test split
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    # Train and evaluate Random Forest
+    model, accuracy, report = train_random_forest(X_train, y_train, X_test, y_test)
 
 
 if __name__ == "__main__":
