@@ -12,6 +12,7 @@ The following models were trained and evaluated on the dataset:
 3. **Support Vector Classifier (SVC)**
 4. **K-Nearest Neighbors (KNN)**
 5. **Multi-Layer Perceptron (MLP)**
+6. **Decision Tree**
 
 ## Results Summary
 
@@ -22,6 +23,7 @@ The following models were trained and evaluated on the dataset:
 | **SVC**            | 0.6731   | 0.73              | 0.58     | 0.69      | 0.67         | 0.67            |
 | **KNN**            | 0.9107   | 0.94              | 0.88     | 0.91      | 0.91         | 0.91            |
 | **MLP**            | 0.7136   | 0.75              | 0.58     | 0.76      | 0.70         | 0.70            |
+| **Decision Tree**  | 0.9054   | 0.94              | 0.87     | 0.91      | 0.91         | 0.91            |
 
 ## Detailed Analysis
 
@@ -55,10 +57,16 @@ The following models were trained and evaluated on the dataset:
    - **Strengths**: High recall for `Rotten`.
    - **Weaknesses**: Low recall for `Fresh`, making it less suitable for this dataset.
 
+### 6. Decision Tree
+   - **Accuracy**: 90.5%
+   - **Summary**: The Decision Tree model performed well, achieving an accuracy close to Random Forest and KNN. It has consistent F1-scores across all classes, though slightly lower than Random Forest.
+   - **Strengths**: High precision and recall for `Certified-Fresh` and `Rotten`.
+   - **Weaknesses**: Slightly lower accuracy compared to Random Forest and KNN, indicating it may not generalize as well.
+
 ## Conclusion
 
-- **Top Models**: Random Forest and KNN achieved the best performance, making them strong candidates for deployment.
+- **Top Models**: Random Forest, KNN, and Decision Tree achieved the best performance, making them strong candidates for deployment.
 - **Further Optimization**: XGBoost may benefit from additional tuning to enhance recall for the `Fresh` class.
 - **Underperforming Models**: SVC and MLP did not perform as well and may require different configurations or feature engineering to be competitive.
 
-Based on these results, **Random Forest** is recommended as the primary model due to its balanced performance across all metrics and ease of deployment.
+Based on these results, **Random Forest** remains the top recommended model due to its balanced performance across all metrics and ease of deployment.

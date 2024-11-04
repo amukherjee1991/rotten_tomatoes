@@ -12,6 +12,7 @@ from sklearn.metrics import classification_report, accuracy_score
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
+from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
 
 
@@ -216,6 +217,40 @@ def train_mlp(X_train, y_train, X_test, y_test):
     return model, accuracy, report
 
 
+def train_decision_tree(X_train, y_train, X_test, y_test):
+    """
+    Train and evaluate a Decision Tree model.
+
+    Parameters:
+    - X_train: Training feature set
+    - y_train: Training labels
+    - X_test: Testing feature set
+    - y_test: Testing labels
+
+    Returns:
+    - model: Trained Decision Tree model
+    - accuracy: Accuracy on the test set
+    - report: Classification report on the test set
+    """
+    # Initialize the model
+    model = DecisionTreeClassifier(random_state=42)
+    
+    # Train the model
+    model.fit(X_train, y_train)
+    
+    # Make predictions
+    y_pred = model.predict(X_test)
+    
+    # Evaluate the model
+    accuracy = accuracy_score(y_test, y_pred)
+    report = classification_report(y_test, y_pred)
+    
+    print("Decision Tree Model Accuracy:", accuracy)
+    print("Classification Report:\n", report)
+    
+    return model, accuracy, report
+
+
 def main():
     # Unzip and load data
     unzip_folder("datasets.zip", ".")
@@ -242,6 +277,7 @@ def main():
     model, accuracy, report = train_svc(X_train, y_train, X_test, y_test)
     model, accuracy, report = train_knn(X_train, y_train, X_test, y_test)
     model, accuracy, report = train_mlp(X_train, y_train, X_test, y_test)
+    model, accuracy, report = train_decision_tree(X_train, y_train, X_test, y_test) 
 
 
 if __name__ == "__main__":
