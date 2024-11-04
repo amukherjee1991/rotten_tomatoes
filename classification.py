@@ -139,8 +139,6 @@ def train_xgboost(X_train, y_train, X_test, y_test):
 
     return model, accuracy, report
 
-    return model, accuracy, report
-
 
 def train_svc(X_train, y_train, X_test, y_test):
     model = SVC(random_state=42)
