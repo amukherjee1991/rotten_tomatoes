@@ -13,7 +13,8 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import classification_report, accuracy_score
 from xgboost import XGBClassifier
 from sklearn.svm import SVC
-
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
 
 def unzip_folder(zip_path: str, extract_to: str):
     os.makedirs(extract_to, exist_ok=True)
@@ -118,7 +119,7 @@ def train_xgboost(X_train, y_train, X_test, y_test):
     # Encode target labels
     label_encoder = LabelEncoder()
     y_train_encoded = label_encoder.fit_transform(y_train)
-    y_test_encoded = label_encoder.transform(y_test)
+    # y_test_encoded = label_encoder.transform(y_test)
 
     # Initialize and train the XGBoost model
     model = XGBClassifier(
@@ -153,6 +154,32 @@ def train_svc(X_train, y_train, X_test, y_test):
 
     return model, accuracy, report
 
+def train_knn(X_train, y_train, X_test, y_test, n_neighbors=5):
+    model = KNeighborsClassifier(n_neighbors=n_neighbors)
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    
+    accuracy = accuracy_score(y_test, y_pred)
+    report = classification_report(y_test, y_pred)
+    
+    print("KNN Model Accuracy:", accuracy)
+    print("Classification Report:\n", report)
+    
+    return model, accuracy, report
+
+def train_mlp(X_train, y_train, X_test, y_test):
+    model = MLPClassifier(hidden_layer_sizes=(100,), max_iter=300, random_state=42)
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    
+    accuracy = accuracy_score(y_test, y_pred)
+    report = classification_report(y_test, y_pred)
+    
+    print("MLP Model Accuracy:", accuracy)
+    print("Classification Report:\n", report)
+    
+    return model, accuracy, report
+
 
 def main():
     # Unzip and load data
@@ -183,6 +210,8 @@ def main():
     model, accuracy, report = train_random_forest(X_train, y_train, X_test, y_test)
     model, accuracy, report = train_xgboost(X_train, y_train, X_test, y_test)
     model, accuracy, report = train_svc(X_train, y_train, X_test, y_test)
+    model, accuracy, report = train_knn(X_train, y_train, X_test, y_test)
+    model, accuracy, report = train_mlp(X_train, y_train, X_test, y_test)
 
 
 if __name__ == "__main__":
