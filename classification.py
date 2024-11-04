@@ -12,6 +12,8 @@ from sklearn.impute import SimpleImputer
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import classification_report, accuracy_score
 from xgboost import XGBClassifier
+from sklearn.svm import SVC
+
 
 def unzip_folder(zip_path: str, extract_to: str):
     os.makedirs(extract_to, exist_ok=True)
@@ -111,33 +113,46 @@ def train_random_forest(X_train, y_train, X_test, y_test):
 
     return model, accuracy, report
 
+
 def train_xgboost(X_train, y_train, X_test, y_test):
-    model = XGBClassifier(random_state=42, use_label_encoder=False, eval_metric='mlogloss')
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
-    
+    # Encode target labels
+    label_encoder = LabelEncoder()
+    y_train_encoded = label_encoder.fit_transform(y_train)
+    y_test_encoded = label_encoder.transform(y_test)
+
+    # Initialize and train the XGBoost model
+    model = XGBClassifier(
+        random_state=42, use_label_encoder=False, eval_metric="mlogloss"
+    )
+    model.fit(X_train, y_train_encoded)
+
+    # Predict and decode labels back to original form
+    y_pred_encoded = model.predict(X_test)
+    y_pred = label_encoder.inverse_transform(y_pred_encoded)
+
+    # Evaluate the model
     accuracy = accuracy_score(y_test, y_pred)
     report = classification_report(y_test, y_pred)
-    
+
     print("XGBoost Model Accuracy:", accuracy)
     print("Classification Report:\n", report)
-    
+
     return model, accuracy, report
 
-from sklearn.svm import SVC
-from sklearn.metrics import classification_report, accuracy_score
+    return model, accuracy, report
+
 
 def train_svc(X_train, y_train, X_test, y_test):
     model = SVC(random_state=42)
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
-    
+
     accuracy = accuracy_score(y_test, y_pred)
     report = classification_report(y_test, y_pred)
-    
+
     print("SVC Model Accuracy:", accuracy)
     print("Classification Report:\n", report)
-    
+
     return model, accuracy, report
 
 
@@ -168,8 +183,9 @@ def main():
 
     # Train and evaluate Random Forest
     model, accuracy, report = train_random_forest(X_train, y_train, X_test, y_test)
-    # model, accuracy, report = train_xgboost(X_train, y_train, X_test, y_test)
+    model, accuracy, report = train_xgboost(X_train, y_train, X_test, y_test)
     model, accuracy, report = train_svc(X_train, y_train, X_test, y_test)
+
 
 if __name__ == "__main__":
     main()
