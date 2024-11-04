@@ -1,6 +1,10 @@
 import os
 import zipfile
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import confusion_matrix
+import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.pipeline import Pipeline
@@ -15,6 +19,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
 
+os.makedirs("summary_stats", exist_ok=True)
 
 def unzip_folder(zip_path: str, extract_to: str):
     os.makedirs(extract_to, exist_ok=True)
@@ -251,6 +256,53 @@ def train_decision_tree(X_train, y_train, X_test, y_test):
     return model, accuracy, report
 
 
+
+def generate_summary_stats(df):
+    # Save numeric summary statistics
+    summary_stats = df.describe()
+    summary_stats.to_csv("summary_stats/numeric_summary.csv")
+    
+    # Save categorical counts
+    categorical_columns = ["content_rating", "genres", "directors", "authors", "actors", "production_company"]
+    with open("summary_stats/categorical_counts.txt", "w") as f:
+        for col in categorical_columns:
+            f.write(f"{col}:\n")
+            f.write(df[col].value_counts().to_string())
+            f.write("\n\n")
+
+def plot_distribution(df, column, title, filename):
+    plt.figure(figsize=(10, 6))
+    ax = sns.countplot(data=df, x=column, palette="Set3")
+    ax.bar_label(ax.containers[0])
+    plt.title(title)
+    plt.savefig(f"summary_stats/{filename}.png")
+    plt.close()
+
+def save_confusion_matrix(y_true, y_pred, model_name):
+    cm = confusion_matrix(y_true, y_pred)
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=["Rotten", "Fresh", "Certified-Fresh"], 
+                yticklabels=["Rotten", "Fresh", "Certified-Fresh"])
+    plt.title(f"Confusion Matrix for {model_name}")
+    plt.xlabel("Predicted")
+    plt.ylabel("Actual")
+    plt.savefig(f"summary_stats/{model_name}_confusion_matrix.png")
+    plt.close()
+
+def save_feature_importance(model, features):
+    if hasattr(model, "feature_importances_"):
+        feature_importance = model.feature_importances_
+        indices = np.argsort(feature_importance)[::-1]
+
+        plt.figure(figsize=(10, 6))
+        plt.title("Feature Importances")
+        plt.barh(range(len(indices)), feature_importance[indices], color="b", align="center")
+        plt.yticks(range(len(indices)), [features[i] for i in indices])
+        plt.xlabel("Relative Importance")
+        plt.savefig("summary_stats/random_forest_feature_importance.png")
+        plt.close()
+
+
 def main():
     # Unzip and load data
     unzip_folder("datasets.zip", ".")
@@ -258,6 +310,11 @@ def main():
     movies = read_csv("datasets/rotten_tomatoes_movies.csv")
     merged_df = pd.merge(movies, reviews, on="rotten_tomatoes_link", how="left")
     merged_df = preprocess_data(merged_df)
+    generate_summary_stats(movies)
+    plot_distribution(movies, "content_rating", "Content Rating Distribution", "content_rating_distribution")
+    plot_distribution(movies, "audience_status", "Audience Status Distribution", "audience_status_distribution")
+    plot_distribution(movies, "tomatometer_status", "Tomatometer Status Distribution", "tomatometer_status_distribution")
+    
     # Define target and features
     X = merged_df[
         ["runtime", "content_rating_encoded", "tomatometer_fresh_critics_count"]
