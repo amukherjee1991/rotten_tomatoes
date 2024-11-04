@@ -119,7 +119,7 @@ def train_xgboost(X_train, y_train, X_test, y_test):
     # Encode target labels
     label_encoder = LabelEncoder()
     y_train_encoded = label_encoder.fit_transform(y_train)
-    y_test_encoded = label_encoder.transform(y_test)
+    # y_test_encoded = label_encoder.transform(y_test)
 
     # Initialize and train the XGBoost model
     model = XGBClassifier(
